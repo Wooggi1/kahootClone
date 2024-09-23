@@ -1,11 +1,13 @@
 <script lang="ts">
-  import svelteLogo from './assets/svelte.svg'
-  import viteLogo from '/vite.svg'
-  import Counter from './lib/Counter.svelte'
   import Button from './lib/Button.svelte';
   import QuizCard from './lib/QuizCard.svelte';
+  import { NetService } from './service/net';
+  import type { Quiz } from './model/quiz';
 
   let quizzes: {_id: string, name: string}[] = [];
+
+  let netService = new NetService();
+  netService.connect
 
   async function getQuizzes(){
     let response = await fetch("http://localhost:3000/api/quizzes")
@@ -23,27 +25,18 @@
   let msg = ""
 
   function connect(){
-    let websocket = new WebSocket("ws://localhost:3000/ws")
-    websocket.onopen = () => {
-      console.log("opened connection")
-      websocket.send(`join:${code}`)
-    }
-
-    websocket.onmessage = (event) => {
-      console.log(event.data)
-    }
+    netService.sendPacket({
+      id: 0,
+      code: "1234",
+      name: "coolname1234"
+    })
   }
 
-  function hostQuiz(quiz) {
-    let websocket = new WebSocket("ws://localhost:3000/ws")
-    websocket.onopen = () => {
-      console.log("opened connection")
-      websocket.send(`host:"${quiz.id}`)
-    }
-
-    websocket.onmessage = (event) => {
-      msg = event.data
-    }
+  function hostQuiz(quiz: Quiz) {
+    netService.sendPacket({
+      id: 1,
+      quizId: quiz.id
+    })
   } 
 </script>
 
