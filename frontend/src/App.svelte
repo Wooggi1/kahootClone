@@ -20,11 +20,13 @@
   }
 
   let code = ""
+  let msg = ""
+
   function connect(){
     let websocket = new WebSocket("ws://localhost:3000/ws")
     websocket.onopen = () => {
       console.log("opened connection")
-      websocket.send("Hello World")
+      websocket.send(`join:${code}`)
     }
 
     websocket.onmessage = (event) => {
@@ -36,16 +38,17 @@
     let websocket = new WebSocket("ws://localhost:3000/ws")
     websocket.onopen = () => {
       console.log("opened connection")
-      websocket.send(`host"${quiz.id}`)
+      websocket.send(`host:"${quiz.id}`)
     }
 
     websocket.onmessage = (event) => {
-      console.log(event.data)
+      msg = event.data
     }
   } 
 </script>
 
 <Button on:click={getQuizzes}>Get quizzes</Button>
+Message: {msg}
 
 <div>
   {#each quizzes as quiz }
