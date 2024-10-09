@@ -6,19 +6,20 @@ import (
 	"fmt"
 
 	"github.com/gofiber/contrib/websocket"
-	"quiz.com/quiz/internal/entity"
+  "go.mongodb.org/mongo-driver/bson/primitive"
+  "quiz.com/quiz/internal/entity"
 )
 
 type NetService struct {
 	quizService *QuizService
 
-	/*host *websocket.Conn
-	tick	int*/
+  games []*Game
 }
 
 func Net(quizService *QuizService) *NetService {
 	return &NetService{
 		quizService: quizService,
+    games:       []*Game{},
 	}
 }
 
@@ -35,6 +36,21 @@ type QuestionShowPacket struct {
 	Question entity.QuizQuestions `json:"question"`
 }
 
+type ChangeGameStatePacket struct {
+  State GameState `json:"state"`
+}
+
+type PlayerJoinPacket struct {
+  Player Player `json:"player"`
+}
+
+type StartGamePacket struct {
+}
+
+type TickPacket struct {
+  Tick int `json:"tick"`
+}
+
 func (c *NetService) packetIdToPacket(packetId uint8) any {
 	switch packetId {
 	case 0:
@@ -45,6 +61,10 @@ func (c *NetService) packetIdToPacket(packetId uint8) any {
 		{
 			return &HostGamePacket{}
 		}
+  case 5:
+    {
+      return &StartGamePacket{}
+    }
 	}
 
 	return nil
@@ -56,9 +76,41 @@ func (c *NetService) packetToPacketId(packet any) (uint8, error) {
 		{
 			return 2, nil
 		}
+  case ChangeGameStatePacket:
+    {
+      return 3, nil
+    }
+  case PlayerJoinPacket:
+    {
+      return 4, nil
+    }
+  case TickPacket:
+    {
+      return 6, nil
+    }
 	}
 
 	return 0, errors.New("invalid packet type")
+}
+
+func (c *NetService) getGameByCode(code string) *Game {
+  for _, game := range c.games {
+    if game.Code == code {
+      return game 
+    }
+  }
+
+  return nil
+}
+
+func (c *NetService) getGameByHost(host *websocket.Conn) *Game {
+  for _, game := range c.games {
+    if game.Host == host {
+      return game
+    }
+  }
+
+  return nil
 }
 
 func (c *NetService) OnIncomingMessage(con *websocket.Conn, mt int, msg []byte) {
@@ -80,15 +132,54 @@ func (c *NetService) OnIncomingMessage(con *websocket.Conn, mt int, msg []byte) 
 		return
 	}
 
-	switch packet := packet.(type) {
+	switch data := packet.(type) {
 	case *ConnectPacket:
 		{
-			fmt.Println("User wants to join game ", packet.Code)
+			game := c.getGameByCode(data.Code)
+      if game == nil {
+        return
+      }
+
+      game.OnPlayerJoin(data.Name, con)
+      break
 		}
 	case *HostGamePacket:
 		{
-			fmt.Println("User wants to host quiz ", packet.QuizId)
+			quizId, err := primitive.ObjectIDFromHex(data.QuizId)
+      if err != nil {
+        fmt.Println(err)
+        return
+      }
+
+      quiz, err := c.quizService.quizCollection.GetQuizById(quizId)
+      if err != nil {
+        fmt.Println(err)
+        return
+      }
+
+      if quiz == nil {
+        return
+      }
+
+      newGame := newGame(*quiz, con, c)
+      fmt.Println("new game", newGame.Code)
+      c.games = append(c.games, &newGame)
+
+      c.SendPacket(con, ChangeGameStatePacket{
+        State: LobbyState,
+      })
+      break
 		}
+  case *StartGamePacket:
+    {
+      game := c.getGameByHost(con)
+      if game == nil {
+        return
+      }
+
+      game.Start()
+      break
+    }
 	}
 }
 

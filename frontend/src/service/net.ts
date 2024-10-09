@@ -1,7 +1,40 @@
+import type { Player } from "../model/quiz";
+
+export enum PacketTypes {
+  Connect,
+  HostGame,
+  QuestionShow,
+  ChangeGameState,
+  PlayerJoin,
+  StartGame,
+  Tick
+}
+
+export enum GameState {
+  Lobby,
+  Play,
+  Reveal,
+  End
+}
+
+export interface ChangeGameStatePacket {
+  state: GameState
+}
+
+export interface PlayerJoinPacket {
+  player: Player
+}
+
+export interface TickPacket {
+  tick: number;
+}
+
 export class NetService {
   private webSocket!: WebSocket
   private textDecoder: TextDecoder = new TextDecoder();
   private textEncoder: TextEncoder = new TextEncoder();
+
+  private onPacketCallBack?: (packet: any) => void;
 
   connect() {
     this.webSocket = new WebSocket("ws://localhost:3000/ws")
@@ -20,7 +53,14 @@ export class NetService {
 
       console.log(packetId)
       console.log(packet)
+
+      if (this.onPacketCallBack)
+        this.onPacketCallBack(packet)
     }
+  }
+
+  onPacket(callback: (packet: any) => void){
+    this.onPacketCallBack = callback
   }
 
   sendPacket(packet: any) {
