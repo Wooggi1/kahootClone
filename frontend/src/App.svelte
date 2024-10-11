@@ -10,7 +10,11 @@
     type TickPacket,
   } from "./service/net";
   import type { Quiz, QuizQuestion, Player } from "./model/quiz";
+  import PlayerView from "./views/player/PlayerView.svelte";
+  import HostView from "./views/host/HostView.svelte";
+  import Router from "svelte-spa-router";
 
+  /*
   let quizzes: { _id: string; name: string }[] = [];
 
   let currentQuestion: QuizQuestion | null = null;
@@ -91,9 +95,16 @@
       id: 1,
       quizId: quiz.id,
     });
+  }*/
+
+  let routes = {
+    '/': PlayerView,
+    '/host': HostView
   }
 </script>
 
+<Router  {routes} />
+<!--
 {#if state == -1}
   <Button on:click={getQuizzes}>Get quizzes</Button>
   Message: {msg}
@@ -153,3 +164,4 @@
       press correct answer
   {/if}
 {/if}
+-->
