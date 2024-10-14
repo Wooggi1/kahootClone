@@ -1,4 +1,4 @@
-import type { Player } from "../model/quiz";
+import type { Player, QuizQuestion } from "../model/quiz";
 
 export enum PacketTypes {
   Connect,
@@ -7,7 +7,8 @@ export enum PacketTypes {
   ChangeGameState,
   PlayerJoin,
   StartGame,
-  Tick
+  Tick,
+  Answer
 }
 
 export enum GameState {
@@ -42,6 +43,31 @@ export interface ConnectPacket extends Packet {
   name: string
 }
 
+export interface PlayerDisconnectPacket extends Packet {
+  playerId: string;
+}
+
+export interface QuestionShowPacket extends Packet {
+  question: QuizQuestion;
+}
+
+export interface QuestionAnswerPacket extends Packet {
+  question: number;
+}
+
+export interface PlayerRevealPacket extends Packet {
+  points: number;
+}
+
+export interface LeaderboardEntry {
+  name: string;
+  points: number;
+}
+
+export interface LeaderboardPacket extends Packet {
+  points: LeaderboardEntry[];
+}
+
 export class NetService {
   private webSocket!: WebSocket
   private textDecoder: TextDecoder = new TextDecoder();
@@ -50,7 +76,7 @@ export class NetService {
   private onPacketCallBack?: (packet: any) => void;
 
   connect() {
-    this.webSocket = new WebSocket("ws://localhost:3000/ws")
+    this.webSocket = new WebSocket("ws://26.236.222.21:3000/ws")
     this.webSocket.onopen = () => {
       console.log("opened connection")
     }

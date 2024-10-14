@@ -15,6 +15,7 @@
   let views: Record<GameState, any> = {
     [GameState.Lobby]: PlayerLobbyView,
     [GameState.Play]: PlayerPlayView,
+    [GameState.Reveal]: PlayerLobbyView
   }
 </script>
 
