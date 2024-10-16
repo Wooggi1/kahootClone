@@ -15,6 +15,6 @@
       <p class="text-2xl">+ {$points} points</p>
     </div>
   {:else}
-    <h2>Incorrect!</h2>
+    <h2 class="text-3xl">Incorrect!</h2>
   {/if}
 </div>

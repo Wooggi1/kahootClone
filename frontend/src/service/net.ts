@@ -9,7 +9,8 @@ export enum PacketTypes {
   StartGame,
   Tick,
   Answer,
-  PlayerReveal
+  PlayerReveal,
+  Leaderboard
 }
 
 export enum GameState {

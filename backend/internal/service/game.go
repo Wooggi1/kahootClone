@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"strconv"
 	"time"
+	"sort"
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/google/uuid"
@@ -30,6 +31,11 @@ const (
 	RevealState
 	EndState
 )
+
+type LeaderboardEntry struct {
+	Name 						string `json:"name"`
+	Points					int	   `json:"points"`
+}
 
 type Game struct {
 	Id              uuid.UUID
@@ -62,6 +68,14 @@ func newGame(quiz entity.Quiz, host *websocket.Conn, netService *NetService) Gam
 		Players: []*Player{},
 		Host: host,
 		netService: netService,
+	}
+}
+
+func (g *Game) StartOrSkip() {
+	if g.State == LobbyState {
+		g.Start()
+	} else {
+		g.NextQuestion()
 	}
 }
 
@@ -109,7 +123,7 @@ func (g *Game) NextQuestion() {
 }
 
 func (g *Game) Reveal() {
-	g.Time = 10
+	g.Time = 5
 
 	for _, player := range g.Players {
 		g.netService.SendPacket(player.Connection, PlayerRevealPacket{
@@ -128,16 +142,48 @@ func (g *Game) Tick() {
 
 	if g.Time == 0 {
 		switch g.State {
-		case PlayState: {
-			g.Reveal()
-			break
-		}
-		case RevealState:{
-			g.NextQuestion()
-			break
-		}
+		case PlayState: 
+			{
+				g.Reveal()
+				break
+			}
+		case RevealState:
+			{
+				g.Intermission()
+				break
+			}
+		case IntermissionState:
+			{
+				g.NextQuestion()
+				break
+			}
 		}
 	}
+}
+
+func (g *Game) Intermission() {
+	g.Time = 30
+	g.ChangeState(IntermissionState)
+	g.netService.SendPacket(g.Host, LeaderboardPacket{
+		Points: g.getLeaderboard(),
+	})
+}
+
+func (g *Game) getLeaderboard() []LeaderboardEntry {
+	sort.Slice(g.Players, func(i, j int) bool {
+		return g.Players[i].Points > g.Players[j].Points
+	})
+
+	leaderboard := []LeaderboardEntry{}
+	for i := 0; i < int(math.Min(3, float64(len(g.Players)))); i++ {
+		player := g.Players[i]
+		leaderboard = append(leaderboard, LeaderboardEntry{
+			Name: player.Name,
+			Points: player.Points,
+		})
+	}
+
+	return leaderboard
 }
 
 func (g *Game) ChangeState(state GameState) {
