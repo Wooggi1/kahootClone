@@ -5,7 +5,9 @@ import { writable, type Writable } from "svelte/store";
 export const state: Writable<GameState> = writable(GameState.Lobby)
 export const players: Writable<Player[]> = writable([]);
 export const tick: Writable<number> = writable(0)
+export const leaderboard: Writable<Record<string, number>> = writable({})
 export const currentQuestion: Writable<QuizQuestion | null> = writable(null)
+
 
 export class HostGame {
   private net: NetService

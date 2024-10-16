@@ -8,12 +8,14 @@ export enum PacketTypes {
   PlayerJoin,
   StartGame,
   Tick,
-  Answer
+  Answer,
+  PlayerReveal
 }
 
 export enum GameState {
   Lobby,
   Play,
+  Intermission,
   Reveal,
   End
 }
@@ -76,7 +78,7 @@ export class NetService {
   private onPacketCallBack?: (packet: any) => void;
 
   connect() {
-    this.webSocket = new WebSocket("ws://26.236.222.21:3000/ws")
+    this.webSocket = new WebSocket("ws://localhost:3000/ws")
     this.webSocket.onopen = () => {
       console.log("opened connection")
     }

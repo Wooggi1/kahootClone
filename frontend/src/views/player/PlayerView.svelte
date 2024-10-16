@@ -4,6 +4,7 @@
   import PlayerJoinView from "./PlayerJoinView.svelte";
   import PlayerLobbyView from "./PlayerLobbyView.svelte";
   import PlayerPlayView from "./PlayerPlayView.svelte";
+  import PlayerRevealView from "./PlayerRevealView.svelte";
 
   let game = new PlayerGame();
   let active = false
@@ -15,7 +16,7 @@
   let views: Record<GameState, any> = {
     [GameState.Lobby]: PlayerLobbyView,
     [GameState.Play]: PlayerPlayView,
-    [GameState.Reveal]: PlayerLobbyView
+    [GameState.Reveal]: PlayerRevealView
   }
 </script>
 

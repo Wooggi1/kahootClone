@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"strconv"
 	"time"
@@ -12,10 +13,12 @@ import (
 )
 
 type Player struct {
-	Id 							uuid.UUID					`json:"id"`
-	Name						string						`json:"name"`
-	Connection			*websocket.Conn		`json:"-"`
-	Answered				bool							`json:"-"`
+	Id 								uuid.UUID					`json:"id"`
+	Name							string						`json:"name"`
+	Connection				*websocket.Conn		`json:"-"`
+	Points						int								`json:"-"`
+	LastAwardedPoints	int								`json:"-"`
+	Answered					bool							`json:"-"`
 }
 
 type GameState int 
@@ -23,6 +26,7 @@ type GameState int
 const (
 	LobbyState GameState = iota
 	PlayState
+	IntermissionState
 	RevealState
 	EndState
 )
@@ -30,10 +34,13 @@ const (
 type Game struct {
 	Id              uuid.UUID
 	Quiz            entity.Quiz
+	CurrentQuestion int
 	Code            string
 	State 					GameState
+	Ended 					bool
 	Time						int
 	Players					[]*Player
+	
 
 	Host 						*websocket.Conn
 	netService			*NetService
@@ -47,8 +54,10 @@ func newGame(quiz entity.Quiz, host *websocket.Conn, netService *NetService) Gam
 	return Game{
 		Id: uuid.New(),
 		Quiz: quiz,
+		CurrentQuestion: -1,
 		Code: generateCode(),
 		State: LobbyState,
+		Ended: false,
 		Time: 60,
 		Players: []*Player{},
 		Host: host,
@@ -58,40 +67,57 @@ func newGame(quiz entity.Quiz, host *websocket.Conn, netService *NetService) Gam
 
 func (g *Game) Start() {
 	g.ChangeState(PlayState)
-	g.netService.SendPacket(g.Host, QuestionShowPacket{
-		Question: entity.QuizQuestions{
-			Id: "",
-			Name: "What is 2 + 2?",
-			Choices: []entity.QuizChoices{
-				{
-					Id: 	"a",
-					Name: "4",
-					Correct: true,	
-				},
-				{
-					Id: 	"b",
-					Name: "5",
-					Correct: false,		
-				},
-				{
-					Id: 	"c",
-					Name: "6",
-					Correct: false,	
-				},
-				{
-					Id: 	"d",
-					Name: "7",
-					Correct: false,
-				}},
-		},
-	})
+	g.NextQuestion()
 	
 	go func() {
 		for {
+			if(g.Ended) {
+				return
+			}
+
 			g.Tick()
 			time.Sleep(time.Second)
 		}
 	} ()
+}
+
+func (g *Game) ResetPlayerAnswerStates() {
+	for _, player := range g.Players {
+		player.Answered = false
+	}
+}
+
+func (g *Game) End() {
+	g.Ended = true
+	g.ChangeState(EndState)
+}
+
+func (g *Game) NextQuestion() {
+	g.CurrentQuestion++
+
+	if g.CurrentQuestion >= len(g.Quiz.Questions) {
+		g.End()
+		return
+	}
+
+	g.ChangeState(PlayState)
+	g.Time = 60
+
+	g.netService.SendPacket(g.Host, QuestionShowPacket {
+		Question: g.getCurrentQuestion(),
+	})
+}
+
+func (g *Game) Reveal() {
+	g.Time = 10
+
+	for _, player := range g.Players {
+		g.netService.SendPacket(player.Connection, PlayerRevealPacket{
+			Points: player.LastAwardedPoints,
+		})
+	}
+
+	g.ChangeState(RevealState)
 }
 
 func (g *Game) Tick() {
@@ -103,10 +129,11 @@ func (g *Game) Tick() {
 	if g.Time == 0 {
 		switch g.State {
 		case PlayState: {
-			g.ChangeState(RevealState)
+			g.Reveal()
 			break
 		}
 		case RevealState:{
+			g.NextQuestion()
 			break
 		}
 		}
@@ -158,7 +185,7 @@ func (g *Game) OnPlayerJoin(name string, connection *websocket.Conn) {
 	})
 }
 
-func (g *Game) getAnsweredPlayer() []*Player {
+func (g *Game) getAnsweredPlayers() []*Player {
 	players := []*Player{}
 
 	for _, player := range g.Players {
@@ -170,10 +197,38 @@ func (g *Game) getAnsweredPlayer() []*Player {
 	return players
 }
 
-func (g *Game) OnPlayerAnswer(question int, player *Player) {
+func (g *Game) getCurrentQuestion() entity.QuizQuestions {
+	return g.Quiz.Questions[g.CurrentQuestion]
+}
+
+func (g *Game) isCorrectChoice(choiceIndex int) bool {
+	choices := g.getCurrentQuestion().Choices
+	if choiceIndex < 0 || choiceIndex >= len(choices) {
+		return false
+	}
+
+	return choices[choiceIndex].Correct
+}
+
+func (g *Game) getPointsReward() int {
+	answered := len(g.getAnsweredPlayers())
+	orderReward := 5000 - (1000 * math.Min(4, float64(answered)))
+	timeReward := g.Time * (1000 / 60)
+
+	return int(orderReward) + timeReward
+}
+
+func (g *Game) OnPlayerAnswer(choice int, player *Player) {
+	if g.isCorrectChoice(choice) {
+		player.LastAwardedPoints = g.getPointsReward()
+		player.Points +=player.LastAwardedPoints
+	} else {
+		player.LastAwardedPoints = 0
+	}
+
 	player.Answered = true
 
-	if len(g.getAnsweredPlayer()) == len(g.Players) {
-		g.ChangeState(RevealState)
+	if len(g.getAnsweredPlayers()) == len(g.Players) {
+		g.Reveal()
 	}
 }
