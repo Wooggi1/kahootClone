@@ -23,6 +23,7 @@ type App struct{
 
 	quizService *service.QuizService
 	netService 	*service.NetService
+	userService *service.UserService
 }
 
 func (a *App) Init() {
@@ -38,7 +39,9 @@ func (a *App) setupHttp() {
 	app.Use(cors.New())
 
 	quizController := controller.Quiz(a.quizService)
+	userController := controller.User(a.userService)
 	app.Get("/api/quizzes", quizController.GetQuizzes)
+	app.Post("/Register", userController.Register)
 
 	wsController := controller.Ws(a.netService)
 	app.Get("/ws", websocket.New(wsController.Ws))
@@ -50,6 +53,7 @@ func (a *App) setupHttp() {
 func (a *App) setupServices() {
 	a.quizService = service.Quiz(collection.Quiz(a.database.Collection("quizzes")))
 	a.netService = service.Net(a.quizService)
+	a.userService = service.User(collection.User(a.database.Collection("users")))
 }
 
 func (a *App) setupDb() {
