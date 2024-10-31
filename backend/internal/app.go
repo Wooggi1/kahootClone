@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"time"
+	"os"
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
@@ -15,18 +16,30 @@ import (
 	"quiz.com/quiz/internal/collection"
 	"quiz.com/quiz/internal/controller"
 	"quiz.com/quiz/internal/service"
+	"github.com/joho/godotenv"
 )
 
-type App struct{
-	httpServer 	*fiber.App
-	database		*mongo.Database
+type App struct {
+	httpServer  *fiber.App
+	database    *mongo.Database
+	secretKey   []byte
 
 	quizService *service.QuizService
-	netService 	*service.NetService
+	netService  *service.NetService
 	userService *service.UserService
 }
 
 func (a *App) Init() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading environment variables")
+	}
+
+	a.secretKey = []byte(os.Getenv("JWT_SECRET"))
+	if len(a.secretKey) == 0 {
+		log.Fatal("JWT_SECRET is not set in the environment")
+	}
+
 	a.setupDb()
 	a.setupServices()
 	a.setupHttp()
@@ -40,29 +53,29 @@ func (a *App) setupHttp() {
 
 	quizController := controller.Quiz(a.quizService)
 	userController := controller.User(a.userService)
-	app.Get("/api/quizzes", quizController.GetQuizzes)
-	app.Post("/Register", userController.Register)
-
 	wsController := controller.Ws(a.netService)
+
+	app.Get("/api/quizzes", quizController.GetQuizzes)
+	app.Post("/register", userController.Register)
+	app.Post("/login", userController.Login)
 	app.Get("/ws", websocket.New(wsController.Ws))
 
-	log.Fatal(app.Listen(":3000"))
 	a.httpServer = app
 }
 
 func (a *App) setupServices() {
 	a.quizService = service.Quiz(collection.Quiz(a.database.Collection("quizzes")))
 	a.netService = service.Net(a.quizService)
-	a.userService = service.User(collection.User(a.database.Collection("users")))
+	a.userService = service.User(collection.User(a.database.Collection("users"), a.secretKey))
 }
 
 func (a *App) setupDb() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	client, err := mongo.Connect(ctx,
-		options.Client().ApplyURI("mongodb://localhost:27017"))
+
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
-		panic(err)
+		log.Fatal("Failed to connect to MongoDB:", err)
 	}
 
 	a.database = client.Database("quiz")

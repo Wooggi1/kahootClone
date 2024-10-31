@@ -19,3 +19,7 @@ func (u *UserController) Register(c *fiber.Ctx) error {
 	return u.userService.HandleRegister(c)
 }
 
+func (u *UserController) Login(c *fiber.Ctx) error {
+	return u.userService.HandleLogin(c)
+}
+
