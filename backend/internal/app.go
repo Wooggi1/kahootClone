@@ -16,6 +16,7 @@ import (
 	"quiz.com/quiz/internal/collection"
 	"quiz.com/quiz/internal/controller"
 	"quiz.com/quiz/internal/service"
+	"quiz.com/quiz/internal/middleware"
 	"github.com/joho/godotenv"
 )
 
@@ -55,9 +56,11 @@ func (a *App) setupHttp() {
 	userController := controller.User(a.userService)
 	wsController := controller.Ws(a.netService)
 
+	app.Use("/api/protected", middleware.JWTAuthMiddleware)
 	app.Get("/api/quizzes", quizController.GetQuizzes)
-	app.Post("/register", userController.Register)
-	app.Post("/login", userController.Login)
+	app.Post("/api/quiz/create", quizController.CreateQuiz)
+	app.Post("/api/register", userController.Register)
+	app.Post("/api/login", userController.Login)
 	app.Get("/ws", websocket.New(wsController.Ws))
 
 	a.httpServer = app

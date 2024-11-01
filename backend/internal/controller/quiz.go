@@ -24,3 +24,7 @@ func (c QuizController) GetQuizzes(ctx *fiber.Ctx) error {
 
 	return ctx.JSON(quizzes)
 }
+
+func (c QuizController) CreateQuiz(ctx *fiber.Ctx) error {
+	return c.quizService.CreateQuiz(ctx)
+}
