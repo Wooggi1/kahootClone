@@ -6,8 +6,9 @@ import (
 	"fmt"
 
 	"github.com/gofiber/contrib/websocket"
-  "go.mongodb.org/mongo-driver/bson/primitive"
-  "quiz.com/quiz/internal/entity"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"quiz.com/quiz/internal/entity"
+	"quiz.com/quiz/internal/storage"
 )
 
 type NetService struct {
@@ -187,7 +188,7 @@ func (c *NetService) OnIncomingMessage(con *websocket.Conn, mt int, msg []byte) 
         return
       }
 
-      quiz, err := c.quizService.quizCollection.GetQuizById(quizId)
+      quiz, err := storage.GetQuizById(quizId)
       if err != nil {
         fmt.Println(err)
         return

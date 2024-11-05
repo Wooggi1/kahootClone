@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"sort"
 	"strconv"
 	"time"
-	"sort"
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/google/uuid"
 	"quiz.com/quiz/internal/entity"
+	"quiz.com/quiz/internal/storage"
 )
 
 type Player struct {
@@ -39,7 +40,7 @@ type LeaderboardEntry struct {
 
 type Game struct {
 	Id              uuid.UUID
-	Quiz            entity.Quiz
+	Quiz            storage.Quiz
 	CurrentQuestion int
 	Code            string
 	State 					GameState
@@ -56,7 +57,7 @@ func generateCode() string {
 	return strconv.Itoa(100000 + rand.Intn(900000))
 }
 
-func newGame(quiz entity.Quiz, host *websocket.Conn, netService *NetService) Game {
+func newGame(quiz storage.Quiz, host *websocket.Conn, netService *NetService) Game {
 	return Game{
 		Id: uuid.New(),
 		Quiz: quiz,

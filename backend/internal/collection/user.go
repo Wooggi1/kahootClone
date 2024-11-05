@@ -87,20 +87,17 @@ func (c UserCollection) CheckUserAlreadyExist(filter bson.M) (bool, error) {
 }
 
 func (c UserCollection) CreateToken(user *entity.User) (string, error) {
-	// Check if the secret key is set
 	if len(c.secret_key) == 0 {
 		return "", errors.New("secret key not set")
 	}
 
-	// Create a new token with claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":    user.Id,
 		"email": user.Email,
 		"name":  user.Name,
-		"exp":   time.Now().Add(30 * 24 * time.Hour).Unix(), // Token expires in 30 days
+		"exp":   time.Now().Add(30 * 24 * time.Hour).Unix(), 
 	})
 
-	// Sign the token with the secret key
 	tokenString, err := token.SignedString(c.secret_key)
 	if err != nil {
 		return "", err

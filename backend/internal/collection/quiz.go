@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"quiz.com/quiz/internal/entity"
 )
@@ -19,34 +18,17 @@ func Quiz(collection *mongo.Collection) *QuizCollection {
 	}
 }
 
-func (c QuizCollection) InsertQuiz(quiz entity.Quiz) error {
-	_, err := c.collection.InsertOne(context.Background(), quiz)
-	return err
-}
-
-func (c QuizCollection) GetQuizzes() ([]entity.Quiz, error) {
-	cursor, err := c.collection.Find(context.Background(), bson.M{})
+func (c QuizCollection) GetQuestionByAnySubject(filter bson.M) ([]entity.QuizQuestions ,error) {
+	cursor, err := c.collection.Find(context.Background(), filter)
 	if err != nil {
 		return nil, err
 	}
 
-	var quiz []entity.Quiz
-	err = cursor.All(context.Background(), &quiz)
+	var questions []entity.QuizQuestions
+	err = cursor.All(context.Background(), &questions)
 	if err != nil {
 		return nil, err
 	}
 
-	return quiz, nil
-}
-
-func (c QuizCollection) GetQuizById(id primitive.ObjectID) (*entity.Quiz, error) {
-	result := c.collection.FindOne(context.Background(), bson.M{"_id": id})
-
-	var quiz entity.Quiz
-	err := result.Decode(&quiz)
-	if err != nil {
-		return nil, err
-	}
-
-	return &quiz, nil
+	return questions, nil
 }

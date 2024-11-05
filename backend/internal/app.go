@@ -57,7 +57,6 @@ func (a *App) setupHttp() {
 	wsController := controller.Ws(a.netService)
 
 	app.Use("/api/protected", middleware.JWTAuthMiddleware)
-	app.Get("/api/quizzes", quizController.GetQuizzes)
 	app.Post("/api/quiz/create", quizController.CreateQuiz)
 	app.Post("/api/register", userController.Register)
 	app.Post("/api/login", userController.Login)

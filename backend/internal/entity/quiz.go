@@ -4,17 +4,17 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type Quiz struct {
-	Id        primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	Name      string             `json:"name"`
-	Questions []QuizQuestions    `json:"questions"`
+type QuizQuestions struct {
+	Id      primitive.ObjectID	`json:"_id"`
+	Name    string        			`json:"name"`
+	Subject string							`json:"subject"`
+	Content Content							`json:"content"`
+	Choices []QuizChoices 			`json:"choices"`
 }
 
-type QuizQuestions struct {
-	Id      string        `json:"id"`
-	Name    string        `json:"name"`
-	Subject string				`json:"subject"`
-	Choices []QuizChoices `json:"choices"`
+type Content struct {
+	Type		string	`json:"type"`
+	Data    string	`json:"data"`
 }
 
 type QuizChoices struct {

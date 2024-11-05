@@ -12,7 +12,14 @@ export interface Player {
 export interface QuizQuestion {
   id: string;
   name: string;
+  subject: string;
+  content: Content
   choices: QuizChoice[];
+}
+
+export interface Content {
+  Type: string,
+  Data: string,
 }
 
 export interface QuizChoice {

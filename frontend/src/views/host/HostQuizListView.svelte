@@ -1,23 +1,31 @@
 <script lang="ts">
+  import Button from "../../lib/Button.svelte";
   import QuizCard from "../../lib/QuizCard.svelte";
   import type { Quiz } from "../../model/quiz";
 
   let quizzes: Quiz[] = [];
 
-  async function getQuizzes(): Promise<Quiz[]> {
-    let response = await fetch("http://localhost:3000/api/quizzes")
+  async function createQuiz(): Promise<void> {
+    const quizData = {
+      name: "Teste",
+      subjects: ["literature"] 
+    };
+
+    const response = await fetch("http://localhost:3000/api/quiz/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(quizData)
+    });
+
     if (!response.ok) {
-      alert("Failed to fetch quizzes!")
-      return []
+      alert("Failed to create quiz!");
+      return;
     }
 
-    let json = await response.json()
-    return json
+    const newQuiz = await response.json();
+    quizzes = [...quizzes, newQuiz];
+    console.log(newQuiz)
   }
-
-  (async function () {
-    quizzes = await getQuizzes();
-  })();
 </script>
 
 <div class="p-8">
@@ -27,4 +35,7 @@
       <QuizCard on:host {quiz} />
     {/each}
   </div>
+  <Button on:click={createQuiz}>
+    create quiz
+  </Button>
 </div>

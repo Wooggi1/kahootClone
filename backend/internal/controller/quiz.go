@@ -15,16 +15,6 @@ func Quiz(quizService *service.QuizService) QuizController {
 	}
 }
 
-func (c QuizController) GetQuizzes(ctx *fiber.Ctx) error {
-	quizzes, err := c.quizService.GetQuizzes()
-
-	if err != nil {
-		return err
-	}
-
-	return ctx.JSON(quizzes)
-}
-
 func (c QuizController) CreateQuiz(ctx *fiber.Ctx) error {
 	return c.quizService.CreateQuiz(ctx)
 }
