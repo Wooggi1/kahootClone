@@ -23,3 +23,7 @@ func (u *UserController) Login(c *fiber.Ctx) error {
 	return u.userService.HandleLogin(c)
 }
 
+func (u *UserController) DetailUser(c *fiber.Ctx) error {
+	return u .userService.DetailUser(c)
+}
+

@@ -3,7 +3,6 @@ package service
 import (
 	"fmt"
 
-
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
 	"go.mongodb.org/mongo-driver/bson"
@@ -103,5 +102,30 @@ func (s UserService) HandleLogin(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "error generating jwt key"})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"token": token})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"id": user.Id, "name": user.Name, "plan": user.Plan, "points": user.TotalPoints, "token": token})
+}
+
+func (s UserService) DetailUser(c *fiber.Ctx) error {
+	c.Set("Content-Type", "application/json")
+
+	var body struct {
+		UserID string `json:"id"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request payload"})
+	}
+
+	id, err := primitive.ObjectIDFromHex(body.UserID)
+  if err != nil {
+    return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid user ID format"})
+  }
+
+	user, err := s.userCollection.GetUserById(id)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "user doesnt exist"})
+	}
+
+	user.Password = " "
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"userdata": user})
 }
