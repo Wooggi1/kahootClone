@@ -65,7 +65,7 @@ func newGame(quiz storage.Quiz, host *websocket.Conn, netService *NetService) Ga
 		Code: generateCode(),
 		State: LobbyState,
 		Ended: false,
-		Time: 60,
+		Time: 120,
 		Players: []*Player{},
 		Host: host,
 		netService: netService,
@@ -116,11 +116,11 @@ func (g *Game) NextQuestion() {
 	}
 
 	g.ChangeState(PlayState)
-	g.Time = 60
+	g.Time = 120
 
-	g.netService.SendPacket(g.Host, QuestionShowPacket {
+	g.BroadcastPacket(QuestionShowPacket {
 		Question: g.getCurrentQuestion(),
-	})
+	}, true)
 }
 
 func (g *Game) Reveal() {
@@ -137,9 +137,9 @@ func (g *Game) Reveal() {
 
 func (g *Game) Tick() {
 	g.Time--
-	g.netService.SendPacket(g.Host, TickPacket{
+	g.BroadcastPacket(TickPacket{
 		Tick: g.Time,
-	})
+	}, true)
 
 	if g.Time == 0 {
 		switch g.State {

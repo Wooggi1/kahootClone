@@ -56,11 +56,18 @@ func (a *App) setupHttp() {
 	userController := controller.User(a.userService)
 	wsController := controller.Ws(a.netService)
 
+	// Auth Middleware
 	app.Use("/api/protected", middleware.JWTAuthMiddleware)
+
+	// User Routes
 	app.Get("/api/protected/me", userController.DetailUser)
-	app.Post("/api/quiz/create", quizController.CreateQuiz)
 	app.Post("/api/register", userController.Register)
 	app.Post("/api/login", userController.Login)
+
+	// Quiz Routes
+	app.Post("/api/quiz/create", quizController.CreateQuiz)
+
+	// Websocket Routes
 	app.Get("/ws", websocket.New(wsController.Ws))
 
 	a.httpServer = app

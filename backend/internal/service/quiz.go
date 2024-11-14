@@ -18,6 +18,10 @@ type QuizRequest struct {
 	Subjects	[]string 	`json:"subjects"`
 }
 
+type GetQuizRequest struct {
+	Id        string `json:"id"`
+}
+
 func Quiz(quizCollection *collection.QuizCollection) *QuizService {
 	return &QuizService{
 		quizCollection: quizCollection,
