@@ -57,9 +57,16 @@ func (a *App) Init() {
 func (a *App) setupHttp() {
 	app := fiber.New()
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "https://vestibulados-front-qwvn.vercel.app/",
-		AllowHeaders: "*",
+    AllowOrigins: "https://vestibulados-front-qwvn.vercel.app, http://localhost:5173", // Explicitly allow production and local origins
+    AllowMethods: "GET,POST,PUT,DELETE,OPTIONS", // Allow necessary HTTP methods
+    AllowHeaders: "Authorization, Content-Type, Accept", // Explicitly list required headers
+    AllowCredentials: true, // Allow credentials (cookies, authorization headers)
 	}))
+	
+	app.Use(func(c *fiber.Ctx) error {
+    log.Printf("Request Origin: %s | Path: %s | Method: %s", c.Get("Origin"), c.Path(), c.Method())
+    return c.Next()
+	})
 
 
 	quizController := controller.Quiz(a.quizService)
