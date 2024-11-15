@@ -42,12 +42,16 @@ func (a *App) Init() {
 	}
 
 	dbURI := os.Getenv("DB_STRING")
-
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000" // Fallback for local development
+	}
 	a.setupDb(dbURI)
 	a.setupServices()
 	a.setupHttp()
 
-	log.Fatal(a.httpServer.Listen(":3000"))
+	log.Printf("Server is running on port %s", port)
+	log.Fatal(a.httpServer.Listen(":" + port))
 }
 
 func (a *App) setupHttp() {
