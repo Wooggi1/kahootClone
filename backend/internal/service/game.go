@@ -168,25 +168,18 @@ func (g *Game) Tick() {
 }
 
 func (g *Game) Intermission() {
-	g.Time = 30
+	g.Time = 10
 	g.ChangeState(IntermissionState)
-	fmt.Println("Entering intermission. Broadcasting leaderboard...")
 	
 	// Log the leaderboard data before broadcasting
 	leaderboard := g.getLeaderboard()
-	for i, entry := range leaderboard {
-		fmt.Printf("Leaderboard position %d: Name = %s, Points = %d\n", i+1, entry.Name, entry.Points)
-	}
 	
 	g.BroadcastPacket(LeaderboardPacket{
 		Points: leaderboard,
 	}, true)
-	fmt.Println("Leaderboard packet broadcasted.")
 }
 
 func (g *Game) getLeaderboard() []LeaderboardEntry {
-	fmt.Println("Generating leaderboard...")
-	
 	// Sort players by points in descending order
 	sort.Slice(g.Players, func(i, j int) bool {
 		return g.Players[i].Points > g.Players[j].Points
@@ -195,13 +188,11 @@ func (g *Game) getLeaderboard() []LeaderboardEntry {
 	leaderboard := []LeaderboardEntry{}
 	for i := 0; i < int(math.Min(3, float64(len(g.Players)))); i++ {
 		player := g.Players[i]
-		fmt.Printf("Adding player to leaderboard: Name = %s, Points = %d\n", player.Name, player.Points)
 		leaderboard = append(leaderboard, LeaderboardEntry{
 			Name: player.Name,
 			Points: player.Points,
 		})
 	}
-	fmt.Println("Leaderboard generated.")
 	
 	return leaderboard
 }
