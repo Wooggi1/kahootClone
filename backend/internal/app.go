@@ -73,7 +73,7 @@ func (a *App) setupHttp() {
 	app.Get("/test", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"teste": "teste",
-		})
+		})})
 	// Quiz Routes
 	app.Post("/api/quiz/create", quizController.CreateQuiz)
 
