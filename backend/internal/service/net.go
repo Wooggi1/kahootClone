@@ -30,6 +30,7 @@ type ConnectPacket struct {
 
 type HostGamePacket struct {
 	QuizId string `json:"quizId"`
+  HostPlayer Player `json:"hostPlayer"`
 }
 
 type QuestionShowPacket struct {
@@ -110,15 +111,11 @@ func (c *NetService) getGameByCode(code string) *Game {
 }
 
 func (c *NetService) getGameByHost(host *websocket.Conn) *Game {
-	fmt.Printf("Searching for game with host connection: %v\n", host)
 	for _, game := range c.games {
-		fmt.Printf("Checking game with code %s, host connection: %v\n", game.Code, game.Host)
 		if game.Host == host {
-			fmt.Printf("Match found for game with code: %s\n", game.Code)
 			return game
 		}
 	}
-	fmt.Println("No matching game found for host connection")
 	return nil
 }
 
@@ -178,8 +175,8 @@ func (c *NetService) OnIncomingMessage(con *websocket.Conn, mt int, msg []byte) 
 			return
 		}
 
-		newGame := newGame(*quiz, con, c)
-		fmt.Printf("New game created with code %s, host connection: %v\n", newGame.Code, con)
+		newGame := newGame(*quiz, data.HostPlayer, con, c)
+		fmt.Printf("New game created with code %s", newGame.Code)
 		c.games = append(c.games, &newGame)
 
 		c.SendPacket(con, GameCreatedPacket{
@@ -191,7 +188,6 @@ func (c *NetService) OnIncomingMessage(con *websocket.Conn, mt int, msg []byte) 
 		})
 
 	case *StartGamePacket:
-		fmt.Printf("Attempting to start game for host connection: %v\n", con)
 		game := c.getGameByHost(con)
 		if game == nil {
 			fmt.Println("game nulo - No game found for the provided host connection")

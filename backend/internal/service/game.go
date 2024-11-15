@@ -57,7 +57,12 @@ func generateCode() string {
 	return strconv.Itoa(100000 + rand.Intn(900000))
 }
 
-func newGame(quiz storage.Quiz, host *websocket.Conn, netService *NetService) Game {
+func newGame(quiz storage.Quiz, hostPlayer Player, host *websocket.Conn, netService *NetService) Game {
+	fmt.Printf("New game created, host as player %s\n",hostPlayer.Name)
+	hostPlayer.Connection = host
+	hostPlayer.Points = 0
+	hostPlayer.LastAwardedPoints = 0
+	hostPlayer.Answered = false
 	return Game{
 		Id: uuid.New(),
 		Quiz: quiz,
@@ -66,7 +71,7 @@ func newGame(quiz storage.Quiz, host *websocket.Conn, netService *NetService) Ga
 		State: LobbyState,
 		Ended: false,
 		Time: 120,
-		Players: []*Player{},
+		Players: []*Player{&hostPlayer},
 		Host: host,
 		netService: netService,
 	}
@@ -165,12 +170,24 @@ func (g *Game) Tick() {
 func (g *Game) Intermission() {
 	g.Time = 30
 	g.ChangeState(IntermissionState)
-	g.netService.SendPacket(g.Host, LeaderboardPacket{
-		Points: g.getLeaderboard(),
-	})
+	fmt.Println("Entering intermission. Broadcasting leaderboard...")
+	
+	// Log the leaderboard data before broadcasting
+	leaderboard := g.getLeaderboard()
+	for i, entry := range leaderboard {
+		fmt.Printf("Leaderboard position %d: Name = %s, Points = %d\n", i+1, entry.Name, entry.Points)
+	}
+	
+	g.BroadcastPacket(LeaderboardPacket{
+		Points: leaderboard,
+	}, true)
+	fmt.Println("Leaderboard packet broadcasted.")
 }
 
 func (g *Game) getLeaderboard() []LeaderboardEntry {
+	fmt.Println("Generating leaderboard...")
+	
+	// Sort players by points in descending order
 	sort.Slice(g.Players, func(i, j int) bool {
 		return g.Players[i].Points > g.Players[j].Points
 	})
@@ -178,12 +195,14 @@ func (g *Game) getLeaderboard() []LeaderboardEntry {
 	leaderboard := []LeaderboardEntry{}
 	for i := 0; i < int(math.Min(3, float64(len(g.Players)))); i++ {
 		player := g.Players[i]
+		fmt.Printf("Adding player to leaderboard: Name = %s, Points = %d\n", player.Name, player.Points)
 		leaderboard = append(leaderboard, LeaderboardEntry{
 			Name: player.Name,
 			Points: player.Points,
 		})
 	}
-
+	fmt.Println("Leaderboard generated.")
+	
 	return leaderboard
 }
 
