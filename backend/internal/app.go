@@ -41,7 +41,9 @@ func (a *App) Init() {
 		log.Fatal("JWT_SECRET is not set in the environment")
 	}
 
-	a.setupDb()
+	dbURI := os.Getenv("DB_STRING")
+
+	a.setupDb(dbURI)
 	a.setupServices()
 	a.setupHttp()
 
@@ -79,11 +81,11 @@ func (a *App) setupServices() {
 	a.userService = service.User(collection.User(a.database.Collection("users"), a.secretKey))
 }
 
-func (a *App) setupDb() {
+func (a *App) setupDb(dbURI string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(dbURI))
 	if err != nil {
 		log.Fatal("Failed to connect to MongoDB:", err)
 	}
