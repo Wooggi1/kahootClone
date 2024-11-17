@@ -4,22 +4,15 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"strings"
 
-	"log"
 	"os"
 	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
 )
 
 var secret_key []byte
 
 func init() {
-	err := godotenv.Load()
-	if err != nil {
-			log.Fatal("Error loading environment variables")
-	}
-
 	secret_key = []byte(os.Getenv("JWT_SECRET"))
 }
 
