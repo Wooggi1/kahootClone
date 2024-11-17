@@ -1,36 +1,41 @@
-# Use a small base image
-FROM golang:1.20-alpine AS builder
+# Use uma imagem base menor, mas suficiente para buildar o Go
+FROM golang:1.23 AS builder
 
-# Set environment variables for Go
+# Configurações de ambiente para o build Go
 ENV GO111MODULE=on \
     CGO_ENABLED=0 \
     GOOS=linux \
     GOARCH=amd64
 
-# Create app directory
+# Criação do diretório de trabalho
 WORKDIR /app
 
-# Copy and download dependency using go mod
+# Copiar os arquivos de dependências Go
 COPY go.mod go.sum ./
+
+# Fazer o download das dependências do Go
 RUN go mod download
 
-# Copy the source code
+# Copiar o código-fonte da aplicação
 COPY . .
 
-# Build the application
+# Build da aplicação
 RUN go build -o main .
 
-# Use a lightweight image for the final container
+# Segunda etapa: usar uma imagem leve para o contêiner final
 FROM alpine:latest
 
-# Set working directory
+# Instalar bibliotecas mínimas necessárias (opcional, para compatibilidade)
+RUN apk add --no-cache ca-certificates
+
+# Configuração do diretório de trabalho
 WORKDIR /root/
 
-# Copy the compiled binary from the builder
+# Copiar o binário compilado do estágio de build
 COPY --from=builder /app/main .
 
-# Expose port 3000 (or your app's port)
+# Expor a porta necessária (substitua se não for 3000)
 EXPOSE 3000
 
-# Command to run the application
+# Comando para executar a aplicação
 CMD ["./main"]
