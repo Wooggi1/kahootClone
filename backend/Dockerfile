@@ -20,7 +20,7 @@ RUN go mod download
 COPY . .
 
 # Build da aplicação
-RUN go build -o main .
+RUN go build -o main ./cmd/quiz
 
 # Segunda etapa: usar uma imagem leve para o contêiner final
 FROM alpine:latest
