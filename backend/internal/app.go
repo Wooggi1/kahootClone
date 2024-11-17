@@ -49,7 +49,7 @@ func (a *App) setupHttp() {
 
 	// CORS Configuration
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "https://vestibulados-front-qwvn.vercel.app, http://localhost:5173", // Explicitly allow production and local origins
+		AllowOrigins: "https://vestibulados-interface.vercel.app", // Explicitly allow production and local origins
 		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS", // Allow necessary HTTP methods
 		AllowHeaders: "Authorization, Content-Type, Accept", // Explicitly list required headers
 		AllowCredentials: true, // Allow credentials (cookies, authorization headers)
