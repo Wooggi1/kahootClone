@@ -34,8 +34,14 @@ WORKDIR /root/
 # Copiar o binário compilado do estágio de build
 COPY --from=builder /app/main .
 
-# Expor a porta necessária (substitua se não for 3000)
+# Expor a porta necessária
 EXPOSE 3000
 
+# Adicionar comandos para depuração de variáveis de ambiente
+RUN echo "Preparing to run application" && \
+    echo "Checking Environment Variables..." && \
+    echo "DB_STRING: $DB_STRING" && \
+    echo "JWT_SECRET: $JWT_SECRET"
+
 # Comando para executar a aplicação
-CMD ["./main"]
+CMD ["sh", "-c", "echo DB_STRING=$DB_STRING && echo JWT_SECRET=$JWT_SECRET && ./main"]

@@ -58,12 +58,6 @@ func (a *App) setupHttp() {
     AllowHeaders: "Authorization, Content-Type, Accept", // Explicitly list required headers
     AllowCredentials: true, // Allow credentials (cookies, authorization headers)
 	}))
-	
-	app.Use(func(c *fiber.Ctx) error {
-    log.Printf("Request Origin: %s | Path: %s | Method: %s", c.Get("Origin"), c.Path(), c.Method())
-    return c.Next()
-	})
-
 
 	quizController := controller.Quiz(a.quizService)
 	userController := controller.User(a.userService)
