@@ -17,7 +17,6 @@ import (
 	"quiz.com/quiz/internal/controller"
 	"quiz.com/quiz/internal/service"
 	"quiz.com/quiz/internal/middleware"
-	"github.com/joho/godotenv"
 )
 
 type App struct {
@@ -31,11 +30,6 @@ type App struct {
 }
 
 func (a *App) Init() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading environment variables")
-	}
-
 	a.secretKey = []byte(os.Getenv("JWT_SECRET"))
 	if len(a.secretKey) == 0 {
 		log.Fatal("JWT_SECRET is not set in the environment")

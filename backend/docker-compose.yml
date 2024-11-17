@@ -7,6 +7,3 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    environment:
-      - DB_STRING=mongodb+srv://thiago2b9s:5Q7JHu0RtPv7zvNL@vestibulados.r5yrc.mongodb.net/?retryWrites=true&w=majority&appName=Vestibulados
-      - JWT_SECRET=PsOhNgreQuQtjRWXqfRRmXNKvZL1xbBx4IpxVnhy4u82
